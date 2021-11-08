@@ -1,0 +1,19 @@
+services:
+  redissyncer-dashboard:
+    image: jiashiwen/redissyncer-dashboard:v1.0
+    network_mode: "host"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./dashboard.conf:/etc/nginx/conf.d/dashboard.conf
+    container_name: redissyncer-dashboard
+
+  redissyncer-monitor:
+    image: jiashiwen/redissyncer-monitor:latest
+    #ports:
+    network_mode: "host"
+    mem_limit: 2g
+    environment:
+      SPRING_ENV: "--server.port=8088 "
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    container_name: redissyncer-monitor

@@ -1,0 +1,23 @@
+Scene(// class name is optional
+    app_name:"simple app",
+    workers: 4,
+    debug: Some(true),
+    // materials: {// this is a map
+    //     "metal": (
+    //         reflectivity: 1.0,
+    //     ),
+    //     "plastic": (
+    //         reflectivity: 0.5,
+    //     ),
+    // },
+    // entities: [// this is an array
+    //     (
+    //         name: "hero",
+    //         material: "metal",
+    //     ),
+    //     (
+    //         name: "monster",
+    //         material: "plastic",
+    //     ),
+    // ],
+)
