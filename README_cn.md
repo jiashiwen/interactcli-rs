@@ -10,8 +10,19 @@ interactcli-rs 是一个命令行程序框架，用于解决命令行与交互�
 * clone 项目
 
   ```shell
-
+  git clone https://github.com/jiashiwen/interactcli-rs.git
+  cd 
   ```
 
 * 命令行模式
+
+  ```shell
+  cargo run requestsample baidu
+  ```
+
 * 交互模式
+  
+  ```shell
+  cargo run -- -i
+  interact-rs> requestsample baidu
+  ```

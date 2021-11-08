@@ -16,7 +16,7 @@ use std::fs::File;
 use std::io::Read;
 
 lazy_static! {
-    static ref CLIAPP: clap::App<'static> = App::new("clisample")
+    static ref CLIAPP: clap::App<'static> = App::new("interact-rs")
         .version("1.0")
         .author("Shiwen Jia. <jiashiwen@gmail.com>")
         .about("command line sample")

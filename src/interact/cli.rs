@@ -1,4 +1,4 @@
-use crate::cmd::{run_from, get_command_completer};
+use crate::cmd::{get_command_completer, run_from};
 use crate::commons::CommandCompleter;
 use log::error;
 use rustyline::completion::{Completer, Pair};
@@ -105,7 +105,7 @@ pub fn run() {
     }
 
     loop {
-        let p = format!("{}> ", "clisample");
+        let p = format!("{}> ", "interact-rs");
         rl.helper_mut().expect("No helper").colored_prompt = format!("\x1b[1;32m{}\x1b[0m", p);
         let readline = rl.readline(&p);
         match readline {
@@ -144,5 +144,6 @@ pub fn run() {
         }
     }
     rl.append_history("/tmp/history")
-        .map_err(|err| error!("{}", err)).ok();
+        .map_err(|err| error!("{}", err))
+        .ok();
 }

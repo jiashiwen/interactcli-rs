@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "interactcli-rs"
 version = "0.1.0"
 authors = ["jiashiwen"]
 edition = "2018"
