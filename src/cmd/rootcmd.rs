@@ -7,7 +7,7 @@ use crate::configure::set_config_file_path;
 use crate::configure::{self, get_config, get_config_file_path};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::{configure::set_config, interact};
-use clap::{App, Arg, ArgMatches};
+use clap::{App, AppSettings, Arg, ArgMatches};
 use lazy_static::lazy_static;
 use log::info;
 
@@ -20,6 +20,7 @@ lazy_static! {
         .version("1.0")
         .author("Shiwen Jia. <jiashiwen@gmail.com>")
         .about("command line sample")
+        .setting(AppSettings::ArgRequiredElseHelp)
         .arg(
             Arg::new("config")
                 .short('c')

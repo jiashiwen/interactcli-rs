@@ -1,7 +1,7 @@
 use std::{collections::HashMap, sync::RwLock};
 
 use config::*;
-use tokio::io::Ready;
+
 lazy_static::lazy_static! {
     static ref SETTINGS: RwLock<Config> = RwLock::new({
         let settings = Config::default();

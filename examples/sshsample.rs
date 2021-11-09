@@ -12,12 +12,16 @@ pub fn main() {
 
     let mut channel = sess.channel_session().unwrap();
 
-    channel.exec("/tmp/interactcli-rs").unwrap();
+    // channel
+    //     .exec("/root/interactcli-rs/target/release/interactcli-rs")
+    //     .unwrap();
+    let result = channel.exec("/root/interactcli-rs/target/release/interactcli-rs");
+    println!("{:?}", result);
     let mut s = String::new();
 
     channel.read_to_string(&mut s).unwrap();
 
     println!("s is: {}", s);
-    channel.wait_close().ok();
-    println!("{}", channel.exit_status().unwrap());
+    channel.wait_close();
+    println!("{:?}", channel.exit_status());
 }
