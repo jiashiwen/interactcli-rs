@@ -5,6 +5,7 @@
 interactcli-rs 是一个命令行程序框架，用于解决命令行与交互模式一体化问题，包括命令行交互模式统一、子命令提示等功能。该框架集成了clap和shellwords。
 
 ## 快速指南
+
 框架中包含了访问www.baidu.com的例子
 
 快速上手过程如下：
@@ -13,7 +14,7 @@ interactcli-rs 是一个命令行程序框架，用于解决命令行与交互�
 
   ```shell
   git clone https://github.com/jiashiwen/interactcli-rs.git
-  cd 
+  cd interactcli-rs
   ```
 
 * 命令行模式

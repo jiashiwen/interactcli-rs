@@ -14,7 +14,7 @@ The quick start process is as follows:
 
   ```shell
   git clone https://github.com/jiashiwen/interactcli-rs.git
-  cd
+  cd interactcli-rs
   ```
 
 * Command line mode
