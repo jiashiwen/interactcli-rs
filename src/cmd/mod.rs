@@ -1,5 +1,6 @@
 mod commandtask;
 mod configcmd;
+mod loopcmd;
 mod multilevelcmd;
 mod requestsample;
 mod rootcmd;

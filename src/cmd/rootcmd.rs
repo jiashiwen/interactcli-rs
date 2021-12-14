@@ -12,8 +12,19 @@ use lazy_static::lazy_static;
 use log::info;
 
 use std::borrow::Borrow;
+use std::{env, fs, thread};
+
+use crate::cmd::loopcmd::new_loop_cmd;
+use chrono::prelude::Local;
+use fork::{daemon, Fork};
 use std::fs::File;
 use std::io::Read;
+use std::process::{Command, Stdio};
+use std::sync::atomic::AtomicBool;
+use std::sync::atomic::Ordering;
+use std::sync::Arc;
+use std::time::Duration;
+use sysinfo::{System, SystemExt};
 
 lazy_static! {
     static ref CLIAPP: clap::App<'static> = App::new("interact-rs")
@@ -30,9 +41,16 @@ lazy_static! {
                 .takes_value(true)
         )
         .arg(
+            Arg::new("daemon")
+                .short('d')
+                .long("daemon")
+                .about("run as daemon")
+        )
+        .arg(
             Arg::new("interact")
                 .short('i')
                 .long("interact")
+                .conflicts_with("daemon")
                 .about("run as interact mod")
         )
         .arg(
@@ -46,6 +64,7 @@ lazy_static! {
         .subcommand(new_config_cmd())
         .subcommand(new_multi_cmd())
         .subcommand(new_task_cmd())
+        .subcommand(new_loop_cmd())
         .subcommand(
             App::new("test")
                 .about("controls testing features")
@@ -109,23 +128,83 @@ fn subcommands() -> Vec<SubCmd> {
     subcmds
 }
 
+pub fn process_exists(pid: &i32) -> bool {
+    let mut sys = System::new_all();
+    sys.refresh_all();
+    for (syspid, _) in sys.processes() {
+        if syspid == pid {
+            return true;
+        }
+    }
+    return false;
+}
+
 fn cmd_match(matches: &ArgMatches) {
     let config = get_config().unwrap();
     let server = &config["server"];
-    // let req = Request::new("http://dev:8888".to_string());
     let req = Request::new(server.clone());
+
+    if matches.is_present("daemon") {
+        // // 判断pid是否存才，若后台进程已启动，退出启动过程
+        // if let Ok(buf) = fs::read("pid") {
+        //     let text = String::from_utf8(buf).unwrap();
+        //     let num: i32 = text.parse().unwrap();
+        //     if process_exists(&num) {
+        //         println!("num {}", num);
+        //         // std::process::exit(0);
+        //         return;
+        //     }
+        // };
+        let args: Vec<String> = env::args().collect();
+        if let Ok(Fork::Child) = daemon(true, true) {
+            // 启动子进程
+            let mut cmd = Command::new(&args[0]);
+
+            for idx in 1..args.len() {
+                let arg = args.get(idx).expect("get cmd arg error!");
+                // 去除后台启动参数,避免重复启动
+                if arg.eq("-d") || arg.eq("-daemon") {
+                    continue;
+                }
+                cmd.arg(arg);
+            }
+
+            let mut child = cmd.spawn().expect("Child process failed to start.");
+            fs::write("pid", child.id().to_string());
+            println!("process id is:{}", std::process::id());
+            println!("child id is:{}", child.id());
+        }
+        println!("{}", "daemon mod");
+        std::process::exit(0);
+    }
+
     if matches.is_present("interact") {
         interact::run();
         return;
     }
 
-    // You can see how many times a particular flag or argument occurred
-    // Note, only flags can have multiple occurrences
-    // match matches.occurrences_of("v") {
-    //     0 => println!("Verbose mode is off"),
-    //     1 => println!("Verbose mode is kind of on"),
-    //     _ => println!("Don't be crazy"),
-    // }
+    if let Some(ref matches) = matches.subcommand_matches("loop") {
+        let term = Arc::new(AtomicBool::new(false));
+        let sigint_2 = Arc::new(AtomicBool::new(false));
+        signal_hook::flag::register(signal_hook::consts::SIGTERM, Arc::clone(&term)).unwrap();
+        signal_hook::flag::register(signal_hook::consts::SIGINT, Arc::clone(&sigint_2)).unwrap();
+        loop {
+            if sigint_2.load(Ordering::Relaxed) {
+                println!("{}", "singint signal recived");
+                break;
+            }
+            // i += 1;
+            // println!("i: {}", i);
+
+            thread::sleep(Duration::from_millis(1000));
+            if term.load(Ordering::Relaxed) {
+                println!("{:?}", term);
+                break;
+            }
+            let dt = Local::now();
+            fs::write("timestamp", dt.timestamp_millis().to_string());
+        }
+    }
 
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level app
@@ -259,20 +338,7 @@ fn cmd_match(matches: &ArgMatches) {
                     };
                     rt.block_on(async_req);
                 }
-                // Some("bygroupids") => {
-                //     println!("{}", "bygroupids");
-                //     if let Some(argmatches) = list.subcommand_matches("bygroupids") {
-                //         if let Some(groupids) = argmatches.value_of("tasksgroupid") {
-                //             let rt = tokio::runtime::Runtime::new().unwrap();
-                //             let async_req = async {
-                //             let groupidsarray = groupids.split(',').collect::<Vec<&str>>();
-                //             let resp = req.task_list_by_groupids(groupidsarray).await;
-                //             let result=ReqResult::new(resp);
-                //         }
-                //             rt.block_on(async_req);
-                //         };
-                //     };
-                // }
+
                 _ => {}
             }
         }
