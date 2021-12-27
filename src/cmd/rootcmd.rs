@@ -108,6 +108,10 @@ pub fn all_subcommand(app: &App, beginlevel: usize, input: &mut Vec<SubCmd>) {
         subcmds.push(iterm.get_name().to_string());
         if iterm.has_subcommands() {
             all_subcommand(iterm, nextlevel, input);
+        } else {
+            if beginlevel == 0 {
+                all_subcommand(iterm, nextlevel, input);
+            }
         }
     }
     let subcommand = SubCmd {
