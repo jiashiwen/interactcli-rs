@@ -24,7 +24,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
-use sysinfo::{System, SystemExt};
+use sysinfo::{PidExt, System, SystemExt};
 
 lazy_static! {
     static ref CLIAPP: clap::Command<'static> = clap::Command::new("interact-rs")
@@ -132,11 +132,11 @@ fn subcommands() -> Vec<SubCmd> {
     subcmds
 }
 
-pub fn process_exists(pid: &i32) -> bool {
+pub fn process_exists(pid: &u32) -> bool {
     let mut sys = System::new_all();
     sys.refresh_all();
     for (syspid, _) in sys.processes() {
-        if syspid == pid {
+        if syspid.as_u32().eq(pid) {
             return true;
         }
     }
