@@ -7,7 +7,7 @@ use crate::configure::set_config_file_path;
 use crate::configure::{self, get_config, get_config_file_path};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::{configure::set_config, interact};
-use clap::{App, AppSettings, Arg, ArgMatches};
+use clap::{Arg, ArgMatches, Command as clap_Command};
 use lazy_static::lazy_static;
 use log::info;
 
@@ -19,7 +19,7 @@ use chrono::prelude::Local;
 use fork::{daemon, Fork};
 use std::fs::File;
 use std::io::Read;
-use std::process::{Command, Stdio};
+use std::process::Command;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
@@ -27,38 +27,38 @@ use std::time::Duration;
 use sysinfo::{System, SystemExt};
 
 lazy_static! {
-    static ref CLIAPP: clap::App<'static> = App::new("interact-rs")
+    static ref CLIAPP: clap::Command<'static> = clap::Command::new("interact-rs")
         .version("1.0")
         .author("Shiwen Jia. <jiashiwen@gmail.com>")
         .about("command line sample")
-        .setting(AppSettings::ArgRequiredElseHelp)
+        .arg_required_else_help(true)
         .arg(
             Arg::new("config")
                 .short('c')
                 .long("config")
                 .value_name("FILE")
-                .about("Sets a custom config file")
+                .help("Sets a custom config file")
                 .takes_value(true)
         )
         .arg(
             Arg::new("daemon")
                 .short('d')
                 .long("daemon")
-                .about("run as daemon")
+                .help("run as daemon")
         )
         .arg(
             Arg::new("interact")
                 .short('i')
                 .long("interact")
                 .conflicts_with("daemon")
-                .about("run as interact mod")
+                .help("run as interact mod")
         )
         .arg(
             Arg::new("v")
                 .short('v')
                 .multiple_occurrences(true)
                 .takes_value(true)
-                .about("Sets the level of verbosity")
+                .help("Sets the level of verbosity")
         )
         .subcommand(new_requestsample_cmd())
         .subcommand(new_config_cmd())
@@ -66,14 +66,14 @@ lazy_static! {
         .subcommand(new_task_cmd())
         .subcommand(new_loop_cmd())
         .subcommand(
-            App::new("test")
+            clap::Command::new("test")
                 .about("controls testing features")
                 .version("1.3")
                 .author("Someone E. <someone_else@other.com>")
                 .arg(
                     Arg::new("debug")
                         .short('d')
-                        .about("print debug information verbosely")
+                        .help("print debug information verbosely")
                 )
         );
     static ref SUBCMDS: Vec<SubCmd> = subcommands();
@@ -90,7 +90,7 @@ pub fn run_app() {
 }
 
 pub fn run_from(args: Vec<String>) {
-    match App::try_get_matches_from(CLIAPP.to_owned(), args.clone()) {
+    match clap_Command::try_get_matches_from(CLIAPP.to_owned(), args.clone()) {
         Ok(matches) => {
             cmd_match(&matches);
         }
@@ -101,7 +101,7 @@ pub fn run_from(args: Vec<String>) {
 }
 
 // 获取全部子命令，用于构建commandcompleter
-pub fn all_subcommand(app: &App, beginlevel: usize, input: &mut Vec<SubCmd>) {
+pub fn all_subcommand(app: &clap_Command, beginlevel: usize, input: &mut Vec<SubCmd>) {
     let nextlevel = beginlevel + 1;
     let mut subcmds = vec![];
     for iterm in app.get_subcommands() {
@@ -149,16 +149,6 @@ fn cmd_match(matches: &ArgMatches) {
     let req = Request::new(server.clone());
 
     if matches.is_present("daemon") {
-        // // 判断pid是否存才，若后台进程已启动，退出启动过程
-        // if let Ok(buf) = fs::read("pid") {
-        //     let text = String::from_utf8(buf).unwrap();
-        //     let num: i32 = text.parse().unwrap();
-        //     if process_exists(&num) {
-        //         println!("num {}", num);
-        //         // std::process::exit(0);
-        //         return;
-        //     }
-        // };
         let args: Vec<String> = env::args().collect();
         if let Ok(Fork::Child) = daemon(true, true) {
             // 启动子进程
@@ -173,8 +163,8 @@ fn cmd_match(matches: &ArgMatches) {
                 cmd.arg(arg);
             }
 
-            let mut child = cmd.spawn().expect("Child process failed to start.");
-            fs::write("pid", child.id().to_string());
+            let child = cmd.spawn().expect("Child process failed to start.");
+            fs::write("pid", child.id().to_string()).unwrap();
             println!("process id is:{}", std::process::id());
             println!("child id is:{}", child.id());
         }
@@ -187,7 +177,7 @@ fn cmd_match(matches: &ArgMatches) {
         return;
     }
 
-    if let Some(ref matches) = matches.subcommand_matches("loop") {
+    if let Some(ref _matches) = matches.subcommand_matches("loop") {
         let term = Arc::new(AtomicBool::new(false));
         let sigint_2 = Arc::new(AtomicBool::new(false));
         signal_hook::flag::register(signal_hook::consts::SIGTERM, Arc::clone(&term)).unwrap();
@@ -197,8 +187,6 @@ fn cmd_match(matches: &ArgMatches) {
                 println!("{}", "singint signal recived");
                 break;
             }
-            // i += 1;
-            // println!("i: {}", i);
 
             thread::sleep(Duration::from_millis(1000));
             if term.load(Ordering::Relaxed) {
@@ -206,7 +194,7 @@ fn cmd_match(matches: &ArgMatches) {
                 break;
             }
             let dt = Local::now();
-            fs::write("timestamp", dt.timestamp_millis().to_string());
+            let _ = fs::write("timestamp", dt.timestamp_millis().to_string());
         }
     }
 

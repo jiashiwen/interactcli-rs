@@ -5,9 +5,10 @@ authors = ["jiashiwen"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+# To use 'RUSTFLAGS="$RUSTFLAGS -A dead_code" cargo build' not desplay dead_code warning
 
 [dependencies]
-clap = "3.0.0-beta.4"
+clap = "3.1.7"
 rustyline = "9.0.0"
 shellwords = "1.1.0"
 log = "0.4"

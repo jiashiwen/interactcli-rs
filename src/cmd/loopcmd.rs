@@ -1,5 +1,5 @@
-use clap::App;
+use clap::Command;
 
-pub fn new_loop_cmd() -> App<'static> {
-    clap::App::new("loop").about("loop")
+pub fn new_loop_cmd() -> Command<'static> {
+    clap::Command::new("loop").about("loop")
 }
