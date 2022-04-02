@@ -40,18 +40,17 @@ interactcli-rs 是一个命令行程序框架，用于解决命令行与交互�
   cmd 模块用于定义命令以及相关子命令
 
   ```rust
-  use clap::App;
-  
-  pub fn new_requestsample_cmd() -> App<'static> {
-      clap::App::new("requestsample")
-          .about("requestsample")
-          .subcommand(get_baidu_cmd())
+  use clap::Command;
+    
+  pub fn new_requestsample_cmd() -> Command<'static> {
+  clap::Command::new("requestsample")
+  .about("requestsample")
+  .subcommand(get_baidu_cmd())
   }
   
-  pub fn get_baidu_cmd() -> App<'static> {
-      clap::App::new("baidu").about("request www.baidu.com")
+  pub fn get_baidu_cmd() -> Command<'static> {
+  clap::Command::new("baidu").about("request www.baidu.com")
   }
-
   ```
 
   new_requestsample_cmd 函数定义了命令 "requestsample",get_baidu_cmd 函数定义了 requestsample 的子命令 baidu
@@ -61,48 +60,78 @@ interactcli-rs 是一个命令行程序框架，用于解决命令行与交互�
 
   ```rust
   lazy_static! {
-    static ref CLIAPP: clap::App<'static> = App::new("interact-rs")
-        .version("1.0")
-        .author("Shiwen Jia. <jiashiwen@gmail.com>")
-        .about("command line sample")
-        .arg(
-            Arg::new("config")
-                .short('c')
-                .long("config")
-                .value_name("FILE")
-                .about("Sets a custom config file")
-                .takes_value(true)
-        )
-        .arg(
-            Arg::new("interact")
-                .short('i')
-                .long("interact")
-                .about("run as interact mod")
-        )
-        .arg(
-            Arg::new("v")
-                .short('v')
-                .multiple_occurrences(true)
-                .takes_value(true)
-                .about("Sets the level of verbosity")
-        )
-        .subcommand(new_requestsample_cmd())
-        .subcommand(new_config_cmd())
-        .subcommand(new_multi_cmd())
-        .subcommand(new_task_cmd())
-        .subcommand(
-            App::new("test")
-                .about("controls testing features")
-                .version("1.3")
-                .author("Someone E. <someone_else@other.com>")
-                .arg(
-                    Arg::new("debug")
-                        .short('d')
-                        .about("print debug information verbosely")
-                )
-        );
-    static ref SUBCMDS: Vec<SubCmd> = subcommands();
-    }
+      static ref CLIAPP: clap::Command<'static> = clap::Command::new("interact-rs")
+          .version("1.0")
+          .author("Shiwen Jia. <jiashiwen@gmail.com>")
+          .about("command line sample")
+          .arg_required_else_help(true)
+          .arg(
+              Arg::new("config")
+                  .short('c')
+                  .long("config")
+                  .value_name("FILE")
+                  .help("Sets a custom config file")
+                  .takes_value(true)
+          )
+          .arg(
+              Arg::new("daemon")
+                  .short('d')
+                  .long("daemon")
+                  .help("run as daemon")
+          )
+          .arg(
+              Arg::new("interact")
+                  .short('i')
+                  .long("interact")
+                  .conflicts_with("daemon")
+                  .help("run as interact mod")
+          )
+          .arg(
+              Arg::new("v")
+                  .short('v')
+                  .multiple_occurrences(true)
+                  .takes_value(true)
+                  .help("Sets the level of verbosity")
+          )
+          .subcommand(new_requestsample_cmd())
+          .subcommand(new_config_cmd())
+          .subcommand(new_multi_cmd())
+          .subcommand(new_task_cmd())
+          .subcommand(new_loop_cmd())
+          .subcommand(
+              clap::Command::new("test")
+                  .about("controls testing features")
+                  .version("1.3")
+                  .author("Someone E. <someone_else@other.com>")
+                  .arg(
+                      Arg::new("debug")
+                          .short('d')
+                          .help("print debug information verbosely")
+                  )
+          );
+      static ref SUBCMDS: Vec<SubCmd> = subcommands();
+  }
+  
+  pub fn run_app() {
+      let matches = CLIAPP.clone().get_matches();
+      if let Some(c) = matches.value_of("config") {
+          println!("config path is:{}", c);
+          set_config_file_path(c.to_string());
+      }
+      set_config(&get_config_file_path());
+      cmd_match(&matches);
+  }
+  
+  pub fn run_from(args: Vec<String>) {
+      match clap_Command::try_get_matches_from(CLIAPP.to_owned(), args.clone()) {
+          Ok(matches) => {
+              cmd_match(&matches);
+          }
+          Err(err) => {
+              err.print().expect("Error writing Error");
+          }
+      };
+  }
 
   ```
 

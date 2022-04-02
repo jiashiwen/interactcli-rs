@@ -2,7 +2,9 @@
 
 [简体中文](README_cn.md)
 
-interactcli-rs is a command-line program framework used to solve the problem of the integration of command-line and interactive modes, including functions such as unification of command-line interactive modes and sub-command prompts. The framework integrates clap and shellwords.
+interactcli-rs is a command-line program framework used to solve the problem of the integration of command-line and
+interactive modes, including functions such as unification of command-line interactive modes and sub-command prompts.
+The framework integrates clap and shellwords.
 
 ## quick guide
 
@@ -24,7 +26,7 @@ The quick start process is as follows:
   ```
 
 * Interactive mode
-  
+
   ```shell
   cargo run -- -i
   interact-rs> requestsample baidu
@@ -36,28 +38,27 @@ Use "Tab" key in interactive mode to prompt command
 
 ## Development steps
 
-* Define commands
-  The cmd module is used to define commands and related subcommands
+* Define commands The cmd module is used to define commands and related subcommands
 
   ```rust
-  use clap::App;
-  
-  pub fn new_requestsample_cmd() -> App<'static> {
-      clap::App::new("requestsample")
-          .about("requestsample")
-          .subcommand(get_baidu_cmd())
+  use clap::Command;
+    
+  pub fn new_requestsample_cmd() -> Command<'static> {
+  clap::Command::new("requestsample")
+  .about("requestsample")
+  .subcommand(get_baidu_cmd())
   }
   
-  pub fn get_baidu_cmd() -> App<'static> {
-      clap::App::new("baidu").about("request www.baidu.com")
+  pub fn get_baidu_cmd() -> Command<'static> {
+  clap::Command::new("baidu").about("request www.baidu.com")
   }
-
   ```
 
-  The new_requestsample_cmd function defines the command "requestsample", and the get_baidu_cmd function defines the subcommand baidu of requestsample
+  The new_requestsample_cmd function defines the command "requestsample", and the get_baidu_cmd function defines the
+  subcommand baidu of requestsample
 
-* Register order
-  The command tree is defined in the src/cmd/rootcmd.rs file, and the defined subcommands can be registered here
+* Register order The command tree is defined in the src/cmd/rootcmd.rs file, and the defined subcommands can be
+  registered here
 
   ```rust
   lazy_static! {
@@ -106,11 +107,12 @@ Use "Tab" key in interactive mode to prompt command
 
   ```
 
-  The defined command does not need other processing, the framework will generate a sub-command tree when the system is running, for the support of the command prompt
+  The defined command does not need other processing, the framework will generate a sub-command tree when the system is
+  running, for the support of the command prompt
 
 
-* Parse command
-  The cmd_match in src/cmd/rootcmd.rs is responsible for parsing commands, and the parsing logic can be written in this function
+* Parse command The cmd_match in src/cmd/rootcmd.rs is responsible for parsing commands, and the parsing logic can be
+  written in this function
 
   ```rust
   fn cmd_match(matches: &ArgMatches) {   
@@ -126,9 +128,8 @@ Use "Tab" key in interactive mode to prompt command
     }
   }
   ```
-  
-* Modify the command prompt in interactive mode
-  The prompt can be defined in src/interact/cli.rs
+
+* Modify the command prompt in interactive mode The prompt can be defined in src/interact/cli.rs
 
   ```rust
   pub fn run() {
