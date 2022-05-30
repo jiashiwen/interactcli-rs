@@ -13,25 +13,25 @@ pub fn new_task_cmd() -> Command<'static> {
 fn cmd_task_create() -> Command<'static> {
     clap::Command::new("create")
         .about("create task")
-        .arg(arg!("<path> 'create task json file path'"))
+        .arg(arg!(<path> "create task json file path"))
 }
 
 fn cmd_task_start() -> Command<'static> {
     clap::Command::new("start")
         .about("start task")
-        .arg(arg!("<taskid> 'input task id to stop'"))
+        .arg(arg!(<taskid> "input task id to stop"))
 }
 
 fn cmd_task_stop() -> Command<'static> {
     clap::Command::new("stop")
         .about("stop task")
-        .arg(arg!("<taskid> 'input task id to stop'"))
+        .arg(arg!(<taskid>  "input task id to stop"))
 }
 
 fn cmd_task_remove() -> Command<'static> {
     clap::Command::new("remove")
         .about("remove task")
-        .arg(arg!("<taskid> 'input task id to stop'"))
+        .arg(arg!(<taskid>  "input task id to stop"))
 }
 
 fn cmd_task_list() -> Command<'static> {
@@ -45,19 +45,19 @@ fn cmd_task_list() -> Command<'static> {
 fn cmd_task_list_all() -> Command<'static> {
     clap::Command::new("all")
         .about("list tasks by task ids")
-        .arg(arg!("[queryid] 'input queryid if have'"))
+        .arg(arg!([queryid] "input queryid if have"))
 }
 
 fn cmd_task_list_by_ids() -> Command<'static> {
     clap::Command::new("byid")
         .about("list tasks by task ids")
-        .arg(arg!("<taskid> 'input taskid'"))
+        .arg(arg!(<taskid> "input taskid"))
 }
 
 fn cmd_task_list_by_names() -> Command<'static> {
     clap::Command::new("bynames")
         .about("list tasks by task names")
-        .arg(arg!(
-            r"<tasksname> 'input tasks name if multi use ',' to splite'"
+        .arg(arg!(<tasksname>
+            r"input tasks name if multi use ',' to splite"
         ))
 }
