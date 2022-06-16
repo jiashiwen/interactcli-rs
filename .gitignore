@@ -24,6 +24,8 @@ target
 dist
 tmp
 /bin
+logs
+log
 
 # fuzzing hack, see fuzz/cli.rs
 fuzz-incremental/

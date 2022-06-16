@@ -1,5 +1,5 @@
 use crate::cmd::requestsample::new_requestsample_cmd;
-use crate::cmd::{new_config_cmd, new_multi_cmd, new_task_cmd};
+use crate::cmd::{new_config_cmd, new_multi_cmd, new_task_cmd, new_use_log_cmd};
 use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
 
@@ -14,7 +14,7 @@ use log::info;
 use std::borrow::Borrow;
 use std::{env, fs, thread};
 
-use crate::cmd::loopcmd::new_loop_cmd;
+use crate::cmd::cmdloop::new_loop_cmd;
 use chrono::prelude::Local;
 use fork::{daemon, Fork};
 use std::fs::File;
@@ -65,6 +65,7 @@ lazy_static! {
         .subcommand(new_multi_cmd())
         .subcommand(new_task_cmd())
         .subcommand(new_loop_cmd())
+        .subcommand(new_use_log_cmd())
         .subcommand(
             clap::Command::new("test")
                 .about("controls testing features")
@@ -175,6 +176,18 @@ fn cmd_match(matches: &ArgMatches) {
     if matches.is_present("interact") {
         interact::run();
         return;
+    }
+
+    // 测试 log 写入不同文件
+    if let Some(ref log) = matches.subcommand_matches("uselog") {
+        println!("use log");
+        if let Some(_) = log.subcommand_matches("syslog") {
+            log::info!(target:"syslog","Input sys log");
+        }
+
+        if let Some(_) = log.subcommand_matches("businesslog") {
+            log::info!(target:"businesslog","Input business log");
+        }
     }
 
     if let Some(ref _matches) = matches.subcommand_matches("loop") {
