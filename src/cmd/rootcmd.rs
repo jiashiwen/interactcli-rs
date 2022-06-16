@@ -3,8 +3,8 @@ use crate::cmd::{new_config_cmd, new_multi_cmd, new_task_cmd, new_use_log_cmd};
 use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
 
-use crate::configure::set_config_file_path;
-use crate::configure::{self, get_config, get_config_file_path};
+use crate::configure::{self, generate_default_config, get_config, get_config_file_path, Config};
+use crate::configure::{set_config_file_path, set_config_from_file};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::{configure::set_config, interact};
 use clap::{Arg, ArgMatches, Command as clap_Command};
@@ -86,7 +86,6 @@ pub fn run_app() {
         println!("config path is:{}", c);
         set_config_file_path(c.to_string());
     }
-    set_config(&get_config_file_path());
     cmd_match(&matches);
 }
 
@@ -145,8 +144,14 @@ pub fn process_exists(pid: &u32) -> bool {
 }
 
 fn cmd_match(matches: &ArgMatches) {
+    if let Some(c) = matches.value_of("config") {
+        set_config_file_path(c.to_string());
+        set_config_from_file(&get_config_file_path());
+    } else {
+        set_config_from_file("");
+    }
     let config = get_config().unwrap();
-    let server = &config["server"];
+    let server = config.server;
     let req = Request::new(server.clone());
 
     if matches.is_present("daemon") {
@@ -352,17 +357,39 @@ fn cmd_match(matches: &ArgMatches) {
     if let Some(config) = matches.subcommand_matches("config") {
         if let Some(show) = config.subcommand_matches("show") {
             match show.subcommand_name() {
-                Some("all") => {
-                    println!("config show all");
-                    info!("log show all");
-                    configure::get_config_file_path();
-                    println!("{:?}", configure::get_config());
+                Some("current") => {
+                    let current = configure::get_config().expect("get current configure error!");
+                    let yml =
+                        serde_yaml::to_string(&current).expect("pars configure to yaml error!");
+                    println!("{}", yml);
                 }
-                Some("info") => {
-                    println!("config show info");
+                Some("default") => {
+                    let config = Config::default();
+                    let yml = serde_yaml::to_string(&config);
+                    match yml {
+                        Ok(y) => {
+                            println!("{}", y);
+                        }
+                        Err(e) => {
+                            log::error!("{}", e);
+                        }
+                    }
                 }
                 _ => {}
             }
+        }
+        if let Some(gen_config) = config.subcommand_matches("gendefault") {
+            let mut file = String::from("");
+            if let Some(path) = gen_config.value_of("filepath") {
+                file.push_str(path);
+            } else {
+                file.push_str("config_default.yml")
+            }
+            if let Err(e) = generate_default_config(file.as_str()) {
+                log::error!("{}", e);
+                return;
+            };
+            println!("{} created!", file);
         }
     }
 }
