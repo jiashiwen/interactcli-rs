@@ -1,17 +1,20 @@
 use crate::cmd::requestsample::new_requestsample_cmd;
-use crate::cmd::{new_config_cmd, new_multi_cmd, new_task_cmd, new_use_log_cmd};
+use crate::cmd::{new_config_cmd, new_multi_cmd, new_server_cmd, new_task_cmd, new_use_log_cmd};
 use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
 
 use crate::configure::{self, generate_default_config, get_config, get_config_file_path, Config};
 use crate::configure::{set_config_file_path, set_config_from_file};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
+use crate::server::start;
 use crate::{configure::set_config, interact};
 use clap::{Arg, ArgMatches, Command as clap_Command};
+use daemonize::Daemonize;
 use lazy_static::lazy_static;
 use log::info;
 
 use std::borrow::Borrow;
+use std::env::args;
 use std::{env, fs, thread};
 
 use crate::cmd::cmdloop::new_loop_cmd;
@@ -66,6 +69,7 @@ lazy_static! {
         .subcommand(new_task_cmd())
         .subcommand(new_loop_cmd())
         .subcommand(new_use_log_cmd())
+        .subcommand(new_server_cmd())
         .subcommand(
             clap::Command::new("test")
                 .about("controls testing features")
@@ -390,6 +394,62 @@ fn cmd_match(matches: &ArgMatches) {
                 return;
             };
             println!("{} created!", file);
+        }
+    }
+
+    if let Some(server) = matches.subcommand_matches("server") {
+        if let Some(startbyfork) = server.subcommand_matches("byfork") {
+            println!("start by fork");
+            if startbyfork.is_present("daemon") {
+                let args: Vec<String> = env::args().collect();
+                if let Ok(Fork::Child) = daemon(true, true) {
+                    // 启动子进程
+                    let mut cmd = Command::new(&args[0]);
+
+                    for idx in 1..args.len() {
+                        let arg = args.get(idx).expect("get cmd arg error!");
+                        // 去除后台启动参数,避免重复启动
+                        if arg.eq("-d") || arg.eq("-daemon") {
+                            continue;
+                        }
+                        cmd.arg(arg);
+                    }
+
+                    let child = cmd.spawn().expect("Child process failed to start.");
+                    fs::write("pid", child.id().to_string()).unwrap();
+                    println!("process id is:{}", std::process::id());
+                    println!("child id is:{}", child.id());
+                }
+                println!("{}", "daemon mod");
+                std::process::exit(0);
+            }
+            start("by_fork:".to_string());
+        }
+        if let Some(startbydaemonize) = server.subcommand_matches("bydaemonize") {
+            println!("start by daemonize");
+            if startbydaemonize.is_present("daemon") {
+                let stdout = File::create("/tmp/daemon.out").unwrap();
+                let stderr = File::create("/tmp/daemon.err").unwrap();
+
+                let daemonize = Daemonize::new()
+                    .pid_file("/tmp/test.pid") // Every method except `new` and `start`
+                    .chown_pid_file(true) // is optional, see `Daemonize` documentation
+                    .working_directory("/tmp") // for default behaviour.
+                    .user("nobody")
+                    .group("daemon") // Group name
+                    .group(2) // or group id.
+                    .umask(0o777) // Set umask, `0o027` by default.
+                    .stdout(stdout) // Redirect stdout to `/tmp/daemon.out`.
+                    .stderr(stderr) // Redirect stderr to `/tmp/daemon.err`.
+                    .privileged_action(|| "Executed before drop privileges");
+
+                match daemonize.start() {
+                    Ok(_) => println!("Success, daemonized"),
+                    Err(e) => eprintln!("Error, {}", e),
+                }
+                println!("pid is:{}", std::process::id());
+            }
+            start("by_daemonize:".to_string());
         }
     }
 }

@@ -9,7 +9,6 @@ edition = "2018"
 
 [dependencies]
 clap = "3.1.17"
-# clap = "4.0.18"
 rustyline = "9.1.2"
 shellwords = "1.1.0"
 log = "0.4.16"
@@ -32,6 +31,7 @@ fork = "0.1.19"
 sysinfo = "0.23.6"
 chrono = "0.4.19"
 signal-hook = "0.3.13"
+daemonize = "0.4.1" 
 
 
 [[example]]
