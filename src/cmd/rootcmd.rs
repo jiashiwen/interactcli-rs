@@ -408,7 +408,7 @@ fn cmd_match(matches: &ArgMatches) {
             println!("start by fork");
             if startbyfork.get_flag("daemon") {
                 let args: Vec<String> = env::args().collect();
-                if let Ok(Fork::Child) = daemon(true, true) {
+                if let Ok(Fork::Child) = daemon(true, false) {
                     // 启动子进程
                     let mut cmd = Command::new(&args[0]);
 
