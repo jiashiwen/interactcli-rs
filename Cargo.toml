@@ -8,7 +8,8 @@ edition = "2018"
 # To use 'RUSTFLAGS="$RUSTFLAGS -A dead_code" cargo build' not desplay dead_code warning
 
 [dependencies]
-clap = "3.1.17"
+# clap = "3.1.17"
+clap = "4.0.18"
 rustyline = "9.1.2"
 shellwords = "1.1.0"
 log = "0.4.16"

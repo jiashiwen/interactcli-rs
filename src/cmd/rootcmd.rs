@@ -8,14 +8,14 @@ use crate::configure::{set_config_file_path, set_config_from_file};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::server::start;
 use crate::{configure::set_config, interact};
-use clap::{Arg, ArgMatches, Command as clap_Command};
+use clap::{Arg, ArgAction, ArgMatches, Command as clap_Command};
 use daemonize::Daemonize;
 use lazy_static::lazy_static;
 use log::info;
 
 use std::borrow::Borrow;
 use std::env::args;
-use std::{env, fs, thread};
+use std::{env, fs, process, thread};
 
 use crate::cmd::cmdloop::new_loop_cmd;
 use chrono::prelude::Local;
@@ -30,7 +30,7 @@ use std::time::Duration;
 use sysinfo::{PidExt, System, SystemExt};
 
 lazy_static! {
-    static ref CLIAPP: clap::Command<'static> = clap::Command::new("interact-rs")
+    static ref CLIAPP: clap::Command = clap::Command::new("interact-rs")
         .version("1.0")
         .author("Shiwen Jia. <jiashiwen@gmail.com>")
         .about("command line sample")
@@ -41,12 +41,13 @@ lazy_static! {
                 .long("config")
                 .value_name("FILE")
                 .help("Sets a custom config file")
-                .takes_value(true)
+                // .takes_value(true)
         )
         .arg(
             Arg::new("daemon")
                 .short('d')
                 .long("daemon")
+                .action(ArgAction::SetTrue)
                 .help("run as daemon")
         )
         .arg(
@@ -54,14 +55,8 @@ lazy_static! {
                 .short('i')
                 .long("interact")
                 .conflicts_with("daemon")
+                .action(ArgAction::SetTrue)
                 .help("run as interact mod")
-        )
-        .arg(
-            Arg::new("v")
-                .short('v')
-                .multiple_occurrences(true)
-                .takes_value(true)
-                .help("Sets the level of verbosity")
         )
         .subcommand(new_requestsample_cmd())
         .subcommand(new_config_cmd())
@@ -86,7 +81,8 @@ lazy_static! {
 
 pub fn run_app() {
     let matches = CLIAPP.clone().get_matches();
-    if let Some(c) = matches.value_of("config") {
+    if let Some(c) = matches.get_one::<String>("config") {
+        // if let Some(c) = matches.value_of("config") {
         println!("config path is:{}", c);
         set_config_file_path(c.to_string());
     }
@@ -148,7 +144,8 @@ pub fn process_exists(pid: &u32) -> bool {
 }
 
 fn cmd_match(matches: &ArgMatches) {
-    if let Some(c) = matches.value_of("config") {
+    if let Some(c) = matches.get_one::<String>("config") {
+        // if let Some(c) = matches.value_of("config") {
         set_config_file_path(c.to_string());
         set_config_from_file(&get_config_file_path());
     } else {
@@ -158,7 +155,8 @@ fn cmd_match(matches: &ArgMatches) {
     let server = config.server;
     let req = Request::new(server.clone());
 
-    if matches.is_present("daemon") {
+    if matches.get_flag("daemon") {
+        // if matches.is_present("daemon") {
         let args: Vec<String> = env::args().collect();
         if let Ok(Fork::Child) = daemon(true, true) {
             // 启动子进程
@@ -179,10 +177,10 @@ fn cmd_match(matches: &ArgMatches) {
             println!("child id is:{}", child.id());
         }
         println!("{}", "daemon mod");
-        std::process::exit(0);
+        process::exit(0);
     }
 
-    if matches.is_present("interact") {
+    if matches.get_flag("interact") {
         interact::run();
         return;
     }
@@ -223,7 +221,8 @@ fn cmd_match(matches: &ArgMatches) {
     // You can check for the existence of subcommands, and if found use their
     // matches just as you would the top level app
     if let Some(ref matches) = matches.subcommand_matches("test") {
-        if matches.is_present("debug") {
+        if matches.contains_id("debug") {
+            // if matches.is_present("debug") {
             println!("Printing debug info...");
         } else {
             println!("Printing normally...");
@@ -243,7 +242,8 @@ fn cmd_match(matches: &ArgMatches) {
 
     if let Some(ref matches) = matches.subcommand_matches("task") {
         if let Some(create) = matches.subcommand_matches("create") {
-            let file = File::open(create.value_of("path").unwrap());
+            let file = File::open(create.get_one::<String>("path").unwrap());
+            // let file = File::open(create.value_of("path").unwrap());
             match file {
                 Ok(mut f) => {
                     let mut data = String::new();
@@ -265,7 +265,7 @@ fn cmd_match(matches: &ArgMatches) {
             }
         }
         if let Some(start) = matches.subcommand_matches("start") {
-            if let Some(taskid) = start.value_of("taskid") {
+            if let Some(taskid) = start.get_one::<String>("taskid") {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let async_req = async {
                     let resp = req.task_start(taskid.to_string()).await;
@@ -276,7 +276,7 @@ fn cmd_match(matches: &ArgMatches) {
             };
         }
         if let Some(stop) = matches.subcommand_matches("stop") {
-            if let Some(taskid) = stop.value_of("taskid") {
+            if let Some(taskid) = stop.get_one::<String>("taskid") {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let async_req = async {
                     let resp = req.task_stop(taskid.to_string()).await;
@@ -287,7 +287,7 @@ fn cmd_match(matches: &ArgMatches) {
             };
         }
         if let Some(remove) = matches.subcommand_matches("remove") {
-            if let Some(taskid) = remove.value_of("taskid") {
+            if let Some(taskid) = remove.get_one::<String>("taskid") {
                 let rt = tokio::runtime::Runtime::new().unwrap();
                 let async_req = async {
                     let resp = req.task_stop(taskid.to_string()).await;
@@ -300,7 +300,10 @@ fn cmd_match(matches: &ArgMatches) {
         if let Some(list) = matches.subcommand_matches("list") {
             match list.subcommand_name() {
                 Some("all") => {
-                    let queryid = list.subcommand_matches("all").unwrap().value_of("queryid");
+                    let queryid = list
+                        .subcommand_matches("all")
+                        .unwrap()
+                        .get_one::<String>("queryid");
                     let mut module = RequestTaskListAll::default();
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let async_req = async {
@@ -321,7 +324,10 @@ fn cmd_match(matches: &ArgMatches) {
                     rt.block_on(async_req);
                 }
                 Some("byid") => {
-                    let queryid = list.subcommand_matches("byid").unwrap().value_of("taskid");
+                    let queryid = list
+                        .subcommand_matches("byid")
+                        .unwrap()
+                        .get_one::<String>("taskid");
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let async_req = async {
                         let mut ids = vec![];
@@ -338,7 +344,7 @@ fn cmd_match(matches: &ArgMatches) {
                     let names = list
                         .subcommand_matches("bynames")
                         .unwrap()
-                        .value_of("tasksname");
+                        .get_one::<String>("tasksname");
                     let rt = tokio::runtime::Runtime::new().unwrap();
                     let async_req = async {
                         // let mut namearry = names;
@@ -384,7 +390,7 @@ fn cmd_match(matches: &ArgMatches) {
         }
         if let Some(gen_config) = config.subcommand_matches("gendefault") {
             let mut file = String::from("");
-            if let Some(path) = gen_config.value_of("filepath") {
+            if let Some(path) = gen_config.get_one::<String>("filepath") {
                 file.push_str(path);
             } else {
                 file.push_str("config_default.yml")
@@ -400,7 +406,7 @@ fn cmd_match(matches: &ArgMatches) {
     if let Some(server) = matches.subcommand_matches("server") {
         if let Some(startbyfork) = server.subcommand_matches("byfork") {
             println!("start by fork");
-            if startbyfork.is_present("daemon") {
+            if startbyfork.get_flag("daemon") {
                 let args: Vec<String> = env::args().collect();
                 if let Ok(Fork::Child) = daemon(true, true) {
                     // 启动子进程
@@ -421,34 +427,42 @@ fn cmd_match(matches: &ArgMatches) {
                     println!("child id is:{}", child.id());
                 }
                 println!("{}", "daemon mod");
-                std::process::exit(0);
+                process::exit(0);
             }
             start("by_fork:".to_string());
         }
         if let Some(startbydaemonize) = server.subcommand_matches("bydaemonize") {
             println!("start by daemonize");
-            if startbydaemonize.is_present("daemon") {
+            let base_dir = env::current_dir().unwrap();
+            if startbydaemonize.get_flag("daemon") {
                 let stdout = File::create("/tmp/daemon.out").unwrap();
                 let stderr = File::create("/tmp/daemon.err").unwrap();
+
+                println!("{:?}", base_dir);
 
                 let daemonize = Daemonize::new()
                     .pid_file("/tmp/test.pid") // Every method except `new` and `start`
                     .chown_pid_file(true) // is optional, see `Daemonize` documentation
-                    .working_directory("/tmp") // for default behaviour.
-                    .user("nobody")
-                    .group("daemon") // Group name
-                    .group(2) // or group id.
+                    .working_directory(base_dir.as_path()) // for default behaviour.
+                    // .user("nobody")
+                    // .group("daemon") // Group name
                     .umask(0o777) // Set umask, `0o027` by default.
                     .stdout(stdout) // Redirect stdout to `/tmp/daemon.out`.
                     .stderr(stderr) // Redirect stderr to `/tmp/daemon.err`.
                     .privileged_action(|| "Executed before drop privileges");
 
                 match daemonize.start() {
-                    Ok(_) => println!("Success, daemonized"),
+                    Ok(_) => {
+                        println!("Success, daemonized");
+                    }
                     Err(e) => eprintln!("Error, {}", e),
                 }
-                println!("pid is:{}", std::process::id());
             }
+            println!("pid is:{}", std::process::id());
+            // let mut path = base_dir.clone();
+            // path.push("pid");
+            // fs::write(path, process::id().to_string()).unwrap();
+            fs::write("pid", process::id().to_string()).unwrap();
             start("by_daemonize:".to_string());
         }
     }
