@@ -1,25 +1,19 @@
+use crate::cmd::cmdloop::new_loop_cmd;
 use crate::cmd::requestsample::new_requestsample_cmd;
 use crate::cmd::{new_config_cmd, new_multi_cmd, new_server_cmd, new_task_cmd, new_use_log_cmd};
 use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
-
 use crate::configure::{self, generate_default_config, get_config, get_config_file_path, Config};
 use crate::configure::{set_config_file_path, set_config_from_file};
+use crate::interact;
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::server::start;
-use crate::{configure::set_config, interact};
+use chrono::prelude::Local;
 use clap::{Arg, ArgAction, ArgMatches, Command as clap_Command};
 use daemonize::Daemonize;
-use lazy_static::lazy_static;
-use log::info;
-
-use std::borrow::Borrow;
-use std::env::args;
-use std::{env, fs, process, thread};
-
-use crate::cmd::cmdloop::new_loop_cmd;
-use chrono::prelude::Local;
 use fork::{daemon, Fork};
+use lazy_static::lazy_static;
+use std::borrow::Borrow;
 use std::fs::File;
 use std::io::Read;
 use std::process::Command;
@@ -27,6 +21,7 @@ use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
 use std::time::Duration;
+use std::{env, fs, process, thread};
 use sysinfo::{PidExt, System, SystemExt};
 
 lazy_static! {
@@ -41,7 +36,6 @@ lazy_static! {
                 .long("config")
                 .value_name("FILE")
                 .help("Sets a custom config file")
-                // .takes_value(true)
         )
         .arg(
             Arg::new("daemon")
