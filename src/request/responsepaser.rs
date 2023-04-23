@@ -1,4 +1,4 @@
-use prettytable::{cell, row, Cell, Row, Table};
+use prettytable::{row, Cell, Row, Table};
 use reqwest::Response;
 use serde_json::{to_string_pretty, Value};
 

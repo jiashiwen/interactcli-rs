@@ -6,7 +6,8 @@ use rustyline::error::ReadlineError;
 use rustyline::highlight::{Highlighter, MatchingBracketHighlighter};
 use rustyline::hint::{Hinter, HistoryHinter};
 use rustyline::validate::{MatchingBracketValidator, Validator};
-use rustyline::{validate, CompletionType, Config, Context, Editor, OutputStreamType};
+// use rustyline::{validate, CompletionType, Config, Context, Editor, OutputStreamType};
+use rustyline::{validate, CompletionType, Config, Context, Editor};
 use rustyline_derive::Helper;
 use shellwords::split;
 use std::borrow::Cow::{self, Borrowed, Owned};
@@ -85,7 +86,6 @@ pub fn run() {
     let config = Config::builder()
         .history_ignore_space(true)
         .completion_type(CompletionType::List)
-        .output_stream(OutputStreamType::Stdout)
         .build();
 
     let h = MyHelper {
@@ -96,8 +96,14 @@ pub fn run() {
         validator: MatchingBracketValidator::new(),
     };
 
-    let mut rl = Editor::with_config(config);
-    // let mut rl = Editor::<()>::new();
+    let mut rl = match Editor::with_config(config) {
+        Ok(rl) => rl,
+        Err(e) => {
+            log::error!("{}", e);
+            return;
+        }
+    };
+
     rl.set_helper(Some(h));
 
     if rl.load_history("/tmp/history").is_err() {
