@@ -5,7 +5,7 @@ use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
 use crate::configure::{self, generate_default_config, get_config, get_config_file_path, Config};
 use crate::configure::{set_config_file_path, set_config_from_file};
-use crate::interact;
+use crate::interact::{self, INTERACT_STATUS};
 use crate::request::{req, ReqResult, Request, RequestTaskListAll};
 use crate::server::start;
 use chrono::prelude::Local;
@@ -175,8 +175,10 @@ fn cmd_match(matches: &ArgMatches) {
     }
 
     if matches.get_flag("interact") {
-        interact::run();
-        return;
+        if !INTERACT_STATUS.load(std::sync::atomic::Ordering::SeqCst) {
+            interact::run();
+            return;
+        }
     }
 
     // 测试 log 写入不同文件
