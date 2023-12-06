@@ -17,7 +17,6 @@ use daemonize::Daemonize;
 use fork::{daemon, Fork};
 use lazy_static::lazy_static;
 use spinoff::{spinners, Color, Spinner};
-use std::borrow::Borrow;
 use std::fs::File;
 use std::io::Read;
 use std::process::Command;
@@ -128,7 +127,7 @@ pub fn get_command_completer() -> CommandCompleter {
 
 fn subcommands() -> Vec<SubCmd> {
     let mut subcmds = vec![];
-    all_subcommand(CLIAPP.clone().borrow(), 0, &mut subcmds);
+    all_subcommand(&CLIAPP, 0, &mut subcmds);
     subcmds
 }
 

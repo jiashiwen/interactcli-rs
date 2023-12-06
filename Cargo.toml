@@ -9,8 +9,8 @@ edition = "2021"
 
 [dependencies]
 clap = "4.2.4"
-rustyline = "11.0.0"
-rustyline-derive = "0.8.0"
+rustyline = "13.0.0"
+rustyline-derive = "0.10.0"
 shellwords = "1.1.0"
 log = "0.4.17"
 log4rs = "1.2.0"
