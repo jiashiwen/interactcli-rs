@@ -1,6 +1,9 @@
 use crate::cmd::cmdloop::new_loop_cmd;
 use crate::cmd::requestsample::new_requestsample_cmd;
-use crate::cmd::{new_config_cmd, new_multi_cmd, new_server_cmd, new_task_cmd, new_use_log_cmd};
+use crate::cmd::{
+    new_config_cmd, new_multi_cmd, new_server_cmd, new_spinoff_sample_cmd, new_task_cmd,
+    new_use_log_cmd,
+};
 use crate::commons::CommandCompleter;
 use crate::commons::SubCmd;
 use crate::configure::{self, generate_default_config, get_config, get_config_file_path, Config};
@@ -13,6 +16,7 @@ use clap::{Arg, ArgAction, ArgMatches, Command as clap_Command};
 use daemonize::Daemonize;
 use fork::{daemon, Fork};
 use lazy_static::lazy_static;
+use spinoff::{spinners, Color, Spinner};
 use std::borrow::Borrow;
 use std::fs::File;
 use std::io::Read;
@@ -20,6 +24,7 @@ use std::process::Command;
 use std::sync::atomic::AtomicBool;
 use std::sync::atomic::Ordering;
 use std::sync::Arc;
+use std::thread::sleep;
 use std::time::Duration;
 use std::{env, fs, process, thread};
 use sysinfo::{PidExt, System, SystemExt};
@@ -59,6 +64,7 @@ lazy_static! {
         .subcommand(new_loop_cmd())
         .subcommand(new_use_log_cmd())
         .subcommand(new_server_cmd())
+        .subcommand(new_spinoff_sample_cmd())
         .subcommand(
             clap::Command::new("test")
                 .about("controls testing features")
@@ -461,5 +467,17 @@ fn cmd_match(matches: &ArgMatches) {
             fs::write("pid", process::id().to_string()).unwrap();
             start("by_daemonize:".to_string());
         }
+    }
+
+    if let Some(spinoff_sample) = matches.subcommand_matches("spinoff_sample") {
+        let mut spinner = Spinner::new(spinners::Dots, "Loading...", Color::Blue);
+        // sleep(Duration::from_secs(3));
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let async_req = async {
+            sleep(Duration::from_secs(3));
+        };
+        rt.block_on(async_req);
+
+        spinner.success("Done!");
     }
 }

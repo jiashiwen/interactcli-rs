@@ -1,3 +1,4 @@
+mod cmd_spinoff_sample;
 mod cmdconfig;
 mod cmdloop;
 mod cmdmultilevel;
@@ -7,6 +8,7 @@ pub mod cmdusedifflogger;
 mod requestsample;
 mod rootcmd;
 
+pub use cmd_spinoff_sample::new_spinoff_sample_cmd;
 pub use cmdconfig::new_config_cmd;
 pub use cmdmultilevel::new_multi_cmd;
 pub use cmdserver::new_server_cmd;
